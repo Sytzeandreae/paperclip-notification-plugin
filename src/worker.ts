@@ -7,19 +7,17 @@ import { matchesMention, extractExcerpt } from "./mention-matcher.js";
 // The full types will be used when the SDK is available.
 type PluginContext = any;
 type PluginEvent = any;
-type PluginHealthDiagnostics = { status: string };
-
 interface NotificationsConfig {
   userId: string;
   mentionIdentifiers: string;
 }
 
-interface ParsedConfig {
+export interface ParsedConfig {
   userId: string;
   mentionIdentifiers: string[];
 }
 
-function parseConfig(raw: Record<string, unknown>): ParsedConfig {
+export function parseConfig(raw: Record<string, unknown>): ParsedConfig {
   const cfg = raw as unknown as NotificationsConfig;
   const ids = (cfg.mentionIdentifiers || "")
     .split(",")
@@ -150,6 +148,10 @@ export async function handleCommentEvent(
   }
 
   const commentId = (event.payload as any)?.commentId;
+  if (!commentId) {
+    ctx.logger.warn("Comment event missing commentId", { eventId: event.eventId });
+    return;
+  }
   const comment = comments.find((c: any) => c.id === commentId);
   if (!comment) return;
 

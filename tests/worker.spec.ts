@@ -115,6 +115,7 @@ describe("handleIssueEvent", () => {
     });
     await handleIssueEvent(ctx as any, baseEvent as any, config);
     expect(ctx.streams.emit).not.toHaveBeenCalled();
+    expect(ctx.issues.get).not.toHaveBeenCalled();
   });
 
   it("logs warning and skips when issue fetch fails", async () => {
@@ -198,6 +199,41 @@ describe("handleCommentEvent", () => {
       payload: { commentId: "cmt-1" },
     };
     await handleCommentEvent(ctx as any, event as any, config);
+    expect(ctx.streams.emit).not.toHaveBeenCalled();
+  });
+
+  it("skips duplicate comment events", async () => {
+    const ctx = mockCtx();
+    ctx.state.get.mockResolvedValue({ notifiedAt: new Date().toISOString() });
+    ctx.issues.get.mockResolvedValue({
+      id: "iss-1",
+      title: "Some issue",
+      description: "Description",
+      assigneeUserId: "agent-1",
+    });
+    ctx.issues.listComments.mockResolvedValue([
+      { id: "cmt-1", body: "Hey @sytze can you look at this?" },
+    ]);
+    const event = {
+      ...baseEvent,
+      eventType: "issue.comment.created" as const,
+      payload: { commentId: "cmt-1" },
+    };
+    await handleCommentEvent(ctx as any, event as any, config);
+    expect(ctx.streams.emit).not.toHaveBeenCalled();
+    expect(ctx.issues.get).not.toHaveBeenCalled();
+  });
+
+  it("logs warning and skips when issue fetch fails for comment event", async () => {
+    const ctx = mockCtx();
+    ctx.issues.get.mockRejectedValue(new Error("network error"));
+    const event = {
+      ...baseEvent,
+      eventType: "issue.comment.created" as const,
+      payload: { commentId: "cmt-1" },
+    };
+    await handleCommentEvent(ctx as any, event as any, config);
+    expect(ctx.logger.warn).toHaveBeenCalled();
     expect(ctx.streams.emit).not.toHaveBeenCalled();
   });
 });
