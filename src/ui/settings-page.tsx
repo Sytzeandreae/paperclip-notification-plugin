@@ -37,23 +37,23 @@ export function SettingsPage(_props: PluginSettingsPageProps) {
   const handleSave = async () => {
     try {
       await saveConfig({ userId, mentionIdentifiers: mentionIds });
-      toast("Configuration saved", "success");
+      toast({ title: "Configuration saved", tone: "success" });
     } catch {
-      toast("Failed to save configuration", "error");
+      toast({ title: "Failed to save configuration", tone: "error" });
     }
   };
 
   const handleRequestPermission = async () => {
     if (!("Notification" in window)) {
-      toast("Notifications not supported in this browser", "error");
+      toast({ title: "Notifications not supported in this browser", tone: "error" });
       return;
     }
     const result = await Notification.requestPermission();
     setPermissionStatus(result);
     if (result === "granted") {
-      toast("Notification permission granted", "success");
+      toast({ title: "Notification permission granted", tone: "success" });
     } else {
-      toast("Notification permission denied", "error");
+      toast({ title: "Notification permission denied", tone: "error" });
     }
   };
 

@@ -16,10 +16,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@paperclipai/plugin-sdk": "workspace:*",
-    "@paperclipai/shared": "workspace:*"
+    "@paperclipai/plugin-sdk": "file:.paperclip-sdk/paperclipai-plugin-sdk-1.0.0.tgz",
+    "@paperclipai/shared": "file:.paperclip-sdk/paperclipai-shared-0.3.1.tgz"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "@types/react": "^19.0.8",
     "esbuild": "^0.24.0",
     "typescript": "^5.7.0",
