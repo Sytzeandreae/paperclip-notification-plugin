@@ -182,6 +182,46 @@ export async function handleCommentEvent(
 }
 
 // ---------------------------------------------------------------------------
+// Deduplication cleanup
+// ---------------------------------------------------------------------------
+
+const DEDUP_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+async function cleanupDedupState(ctx: any): Promise<void> {
+  const index = (await ctx.state.get({
+    scopeKind: "instance",
+    stateKey: "notified-index",
+  })) as Record<string, string> | null;
+
+  if (!index) return;
+
+  const now = Date.now();
+  const surviving: Record<string, string> = {};
+
+  for (const [eventId, notifiedAt] of Object.entries(index)) {
+    if (now - new Date(notifiedAt).getTime() < DEDUP_TTL_MS) {
+      surviving[eventId] = notifiedAt;
+    } else {
+      await ctx.state.delete({
+        scopeKind: "instance",
+        stateKey: `notified-${eventId}`,
+      });
+    }
+  }
+
+  await ctx.state.set(
+    { scopeKind: "instance", stateKey: "notified-index" },
+    surviving,
+  );
+
+  ctx.logger.info("Dedup cleanup complete", {
+    removed: Object.keys(index).length - Object.keys(surviving).length,
+    remaining: Object.keys(surviving).length,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Plugin entry point
 // ---------------------------------------------------------------------------
 
@@ -194,6 +234,10 @@ async function setupPlugin(ctx: any): Promise<void> {
   for (const company of companies) {
     ctx.streams.open(STREAM_CHANNEL, company.id);
   }
+
+  // Run cleanup on startup and every 24 hours
+  await cleanupDedupState(ctx);
+  setInterval(() => cleanupDedupState(ctx), CLEANUP_INTERVAL_MS);
 
   // Data: return current config for settings page
   ctx.data.register("getConfig", async () => {
