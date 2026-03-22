@@ -1,0 +1,66 @@
+export const s = {
+  container: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "16px",
+    padding: "24px",
+    maxWidth: "600px",
+  },
+  heading: {
+    fontSize: "18px",
+    fontWeight: "600" as const,
+    margin: 0,
+  },
+  label: {
+    fontSize: "14px",
+    fontWeight: "500" as const,
+    marginBottom: "4px",
+    display: "block" as const,
+  },
+  input: {
+    width: "100%",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "1px solid var(--border, #333)",
+    background: "var(--input, transparent)",
+    color: "var(--foreground, #fff)",
+    fontSize: "14px",
+    boxSizing: "border-box" as const,
+  },
+  hint: {
+    fontSize: "12px",
+    color: "var(--muted-foreground, #888)",
+    marginTop: "2px",
+  },
+  section: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "8px",
+    padding: "16px",
+    borderRadius: "12px",
+    border: "1px solid var(--border, #333)",
+    background: "var(--card, #1a1a1a)",
+  },
+  btn: {
+    padding: "8px 16px",
+    borderRadius: "8px",
+    border: "none",
+    background: "var(--primary, #6366f1)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500" as const,
+  },
+  statusGranted: {
+    color: "var(--success, #22c55e)",
+    fontSize: "14px",
+  },
+  statusDenied: {
+    color: "var(--destructive, #ef4444)",
+    fontSize: "14px",
+  },
+  statusDefault: {
+    color: "var(--muted-foreground, #888)",
+    fontSize: "14px",
+  },
+};
