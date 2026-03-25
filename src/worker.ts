@@ -226,7 +226,12 @@ async function cleanupDedupState(ctx: any): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function setupPlugin(ctx: any): Promise<void> {
-  const rawConfig = await ctx.config.get();
+  // Load config: prefer plugin state (user-saved), fall back to host config
+  const savedConfig = await ctx.state.get({
+    scopeKind: "instance",
+    stateKey: "plugin-config",
+  }) as Record<string, unknown> | null;
+  const rawConfig = savedConfig ?? await ctx.config.get();
   const config = parseConfig(rawConfig);
 
   // Open notification streams for all companies
@@ -241,21 +246,27 @@ async function setupPlugin(ctx: any): Promise<void> {
 
   // Data: return current config for settings page
   ctx.data.register("getConfig", async () => {
-    return await ctx.config.get();
+    const saved = await ctx.state.get({
+      scopeKind: "instance",
+      stateKey: "plugin-config",
+    }) as Record<string, unknown> | null;
+    return saved ?? await ctx.config.get();
   });
 
-  // Action: save config — persists to host and updates in-memory config.
+  // Action: save config — persists to plugin state and updates in-memory config.
   ctx.actions.register("saveConfig", async (params: Record<string, unknown>) => {
-    await ctx.config.set({
+    const newConfig = {
       userId: String(params.userId || ""),
       mentionIdentifiers: String(params.mentionIdentifiers || ""),
-    });
-    // Re-read from host to ensure in-memory config matches persisted state
-    const updated = await ctx.config.get();
-    const parsed = parseConfig(updated);
+    };
+    await ctx.state.set(
+      { scopeKind: "instance", stateKey: "plugin-config" },
+      newConfig,
+    );
+    const parsed = parseConfig(newConfig);
     config.userId = parsed.userId;
     config.mentionIdentifiers = parsed.mentionIdentifiers;
-    ctx.logger.info("Config updated and persisted", {
+    ctx.logger.info("Config saved", {
       userId: config.userId,
       identifiers: config.mentionIdentifiers,
     });
