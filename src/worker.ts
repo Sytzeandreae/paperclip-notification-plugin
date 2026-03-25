@@ -244,15 +244,18 @@ async function setupPlugin(ctx: any): Promise<void> {
     return await ctx.config.get();
   });
 
-  // Action: save config — updates in-memory config.
-  // The host persists config changes via instanceConfigSchema.
+  // Action: save config — persists to host and updates in-memory config.
   ctx.actions.register("saveConfig", async (params: Record<string, unknown>) => {
-    config.userId = String(params.userId || "");
-    config.mentionIdentifiers = (String(params.mentionIdentifiers || ""))
-      .split(",")
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length >= 3);
-    ctx.logger.info("Config updated", {
+    await ctx.config.set({
+      userId: String(params.userId || ""),
+      mentionIdentifiers: String(params.mentionIdentifiers || ""),
+    });
+    // Re-read from host to ensure in-memory config matches persisted state
+    const updated = await ctx.config.get();
+    const parsed = parseConfig(updated);
+    config.userId = parsed.userId;
+    config.mentionIdentifiers = parsed.mentionIdentifiers;
+    ctx.logger.info("Config updated and persisted", {
       userId: config.userId,
       identifiers: config.mentionIdentifiers,
     });
